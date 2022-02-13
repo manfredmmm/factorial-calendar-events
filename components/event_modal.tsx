@@ -21,8 +21,6 @@ const EventModal = ({
   const submitEvent = async (e: any) => {
     e.preventDefault();
 
-    debugger;
-
     const res = await fetch('http://localhost:3000/api/v1/events', {
       body: JSON.stringify({
         title: e.target.title.value,

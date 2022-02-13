@@ -1,8 +1,13 @@
 import { Calendar, momentLocalizer } from 'react-big-calendar'
 import moment from 'moment'
+import 'moment-timezone'
 import { useEffect, useState } from 'react'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
-import EventModal from 'components/event_modal'
+import DateTimePicker from 'react-date-picker/dist/entry.nostyle'
+import 'react-datetime-picker/dist/DateTimePicker.css'
+import 'react-calendar/dist/Calendar.css'
+import 'react-clock/dist/Clock.css'
+// import EventModal from 'components/event_modal'
 
 type Event = {
   id: number;
@@ -21,14 +26,23 @@ type CalenderEvent = {
 
 const BigCalendar = () => {
   const [list, setList] = useState([]);
-  const [selectedEvent, setSelectedEvent] = useState({id: 0, title: '', start: '', end: ''});
+  const [selectedEvent, setSelectedEvent] = useState({
+    id: 0, 
+    title: '',
+    start: moment().unix().toString(),
+    end: moment().add(1, 'h').unix().toString()
+  });
   const [modalState, setModalState] = useState(false);
+  const [formType, setFormType] = useState('create');
+  const [counter, updateCounter] = useState(0);
+  const [errors, setErrors] = useState('');
 
   useEffect(() => {
+    moment.tz.setDefault("Europe/Madrid");
     fetch('http://localhost:3000/api/v1/events')
       .then(response => response.json())
       .then(setList);
-  }, []);
+  }, [counter]);
 
   const parseEvents = (events: Event[]) => {
     return events.map((event: Event) => {
@@ -40,33 +54,149 @@ const BigCalendar = () => {
       }
     });
   }
-  
-  const handleSelectedEvent = (event: CalenderEvent) => {
-    console.log(event);
-    event.start = moment(event.start).unix().toString();
-    event.end = moment(event.end).unix().toString();
-    setSelectedEvent(event);
+
+  const createEvent = () => {
+    setFormType("create");
     setModalState(true);
   }
 
+  const closeModal = () => {
+    let event = {
+      id: 0,
+      title: '',
+      start: moment().unix().toString(),
+      end: moment().add(1, 'h').unix().toString(),
+    }
+    setErrors('');
+    setSelectedEvent(event);
+    setModalState(false);
+  }
+  
+  const handleSelectedEvent = (event: CalenderEvent) => {
+    event.start = moment(event.start).unix().toString();
+    event.end = moment(event.end).unix().toString();
+    setSelectedEvent(event);
+    setFormType("update");
+    setErrors('');
+    setModalState(true);
+  }
+
+  const deleteEvent = async (e: any) => {
+    e.preventDefault();
+    const res = await fetch(`http://localhost:3000/api/v1/events/${selectedEvent.id}`, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      method: 'DELETE'
+    });
+    const result = await res;
+    if (result.status === 204) {
+      updateCounter(counter+1);
+      setModalState(false);
+    } else {
+      setErrors(result.statusText);
+    }
+  }
+
+  const submitEvent = async (e: any) => {
+    e.preventDefault();
+    if (formType === "create") {
+      const res = await fetch('http://localhost:3000/api/v1/events', {
+        body: JSON.stringify({
+          title: e.target.title.value,
+          start_date: e.target.start_date.value,
+          end_date: e.target.end_date.value,
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        method: 'POST'
+      });
+      const result = await res;
+      if (result.status === 201) {
+        updateCounter(counter+1);
+        setModalState(false); 
+      } else {
+        setErrors(result.statusText);
+      }
+    } else if (formType === "update") {
+      const res = await fetch(`http://localhost:3000/api/v1/events/${selectedEvent.id}`, {
+        body: JSON.stringify({
+          title: e.target.title.value,
+          start_date: e.target.start_date.value,
+          end_date: e.target.end_date.value,
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        method: 'PUT'
+      });
+      const result = await res;
+      if (result.status === 200) {
+        updateCounter(counter+1);
+        setModalState(false);
+      } else {
+        setErrors(result.statusText);
+      }
+    }
+  }
+
   return(
-    <div className="w-4/5 bg-white">
+    <div className="bg-white">
+      <button 
+        className="float-right px-4 py-2 font-bold text-white bg-blue-500 rounded-full hover:bg-blue-700"
+        onClick={createEvent}
+      >
+        Create Event
+      </button>
       <Calendar
         localizer={momentLocalizer(moment)}
         events={parseEvents(list)}
         startAccessor="start"
         endAccessor="end"
         style={{ height: 700 }}
-        onSelectSlot={(event) => {console.log(event)}}
         onSelectEvent={(event) => handleSelectedEvent(event)}
         views={['month']}
       />
-      <EventModal event={selectedEvent} show={modalState}></EventModal>
+      <div className={`max-w-xs fixed bg-slate-400 w-80	top-20 left-20 z-10	p-3 rounded my-2 overflow-hidden shadow-lg ${(modalState === true) ? 'block' : 'hidden'}`}>
+        <button
+          className="float-right mb-5 px-4 py-2 font-bold text-white bg-slate-600 rounded-full hover:bg-slate-800"
+          onClick={closeModal}
+        >
+          x
+        </button>
+        <div className="mb-2 text-xl font-bold">Edit event ({selectedEvent.id})</div>
+        <form className="flex flex-col" onSubmit={submitEvent}>
+          <label className="mb-2 italic" htmlFor="title">Title:</label>
+          <input className="mb-4 border-b-2" defaultValue={selectedEvent.title} id="title" name="title" type="text" autoComplete="title" required />          
+          <label className="mb-2 italic" htmlFor="start_date">Start date:</label>
+          <input className="mb-4 border-b-2" defaultValue={selectedEvent.start} id="start_date" name="start_date" type="text" autoComplete="start_date" required />
+          <label className="mb-2 italic" htmlFor="end_date">End date:</label>
+          <input className="mb-4 border-b-2" defaultValue={selectedEvent.end} id="end_date" name="end_date" type="text" autoComplete="title" required />
+          <div className={`${errors === '' ? 'hidden' : 'block'} w-full text-white bg-red-400 rounded mb-3 px-8 py-3`}>
+            {errors}
+          </div>
+          <button
+            type="submit"
+            className="px-4 py-2 font-bold text-white bg-blue-500 rounded-full hover:bg-blue-700"
+          >
+            Submit
+          </button>
+          <button
+            className={`${formType === 'update' ? 'block' : 'hidden'} px-4 mt-2 py-2 font-bold text-white bg-red-500 rounded-full hover:bg-red-700`}
+            onClick={deleteEvent}
+          >
+            Delete
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
 
-/*<div>
+/*
+<EventModal event={selectedEvent} show={modalState}></EventModal>
+<div>
 {list.map((event: Event) => 
   <div key={event.id}>{event.id} / {event.title} / {event.description} / {event.start_ts} / {event.end_ts}</div>
 )}
