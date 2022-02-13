@@ -104,7 +104,7 @@ const BigCalendar = () => {
   const submitEvent = async (e: any) => {
     e.preventDefault();
     if (formType === "create") {
-      const res = await fetch(`${API_URL}}`, {
+      const res = await fetch(`${API_URL}`, {
         body: JSON.stringify({
           title: e.target.title.value,
           start_date: e.target.start_date.value,
@@ -198,6 +198,7 @@ const BigCalendar = () => {
 }
 
 /*
-<EventModal event={selectedEvent} show={modalState}></EventModal>*/
+<EventModal event={selectedEvent} show={modalState}></EventModal>
+*/
 
 export default BigCalendar;
