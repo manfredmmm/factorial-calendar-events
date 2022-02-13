@@ -2,6 +2,7 @@ import { Calendar, momentLocalizer } from 'react-big-calendar'
 import moment from 'moment'
 import { useEffect, useState } from 'react'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
+import EventModal from 'components/event_modal'
 
 type Event = {
   id: number;
@@ -14,14 +15,20 @@ type Event = {
 type CalenderEvent = {
   id: number,
   title: string,
-  start: Date,
-  end: Date,
-  allDay?: boolean
-  resource?: any,
+  start: any,
+  end: any
 }
 
 const BigCalendar = () => {
   const [list, setList] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState({id: 0, title: '', start: '', end: ''});
+  const [modalState, setModalState] = useState(false);
+
+  useEffect(() => {
+    fetch('http://localhost:3000/api/v1/events')
+      .then(response => response.json())
+      .then(setList);
+  }, []);
 
   const parseEvents = (events: Event[]) => {
     return events.map((event: Event) => {
@@ -33,50 +40,36 @@ const BigCalendar = () => {
       }
     });
   }
-
-  const handleSelect = ({ start, end }) => {
-    const title = window.prompt('New Event name')
-    if (title)
-      this.setState({
-        events: [
-          ...this.state.events,
-          {
-            start,
-            end,
-            title,
-          },
-        ],
-      })
-  }
-
-  const createEvent = (event: CalenderEvent) => {
+  
+  const handleSelectedEvent = (event: CalenderEvent) => {
     console.log(event);
+    event.start = moment(event.start).unix().toString();
+    event.end = moment(event.end).unix().toString();
+    setSelectedEvent(event);
+    setModalState(true);
   }
-
-  useEffect(() => {
-    fetch('http://localhost:3000/api/v1/events')
-      .then(response => response.json())
-      .then(setList);
-  }, []);
 
   return(
-    <div className="w-4/5">
+    <div className="w-4/5 bg-white">
       <Calendar
         localizer={momentLocalizer(moment)}
         events={parseEvents(list)}
         startAccessor="start"
         endAccessor="end"
         style={{ height: 700 }}
-        // onSelectEvent={event => alert(event.title)}
-        onSelectSlot={handleSelect}
+        onSelectSlot={(event) => {console.log(event)}}
+        onSelectEvent={(event) => handleSelectedEvent(event)}
+        views={['month']}
       />
-      <div>
-        {list.map((event: Event) => 
-          <div key={event.id}>{event.title} / {event.start_ts} / {event.end_ts}</div>
-          )}
-      </div>
+      <EventModal event={selectedEvent} show={modalState}></EventModal>
     </div>
   );
 }
+
+/*<div>
+{list.map((event: Event) => 
+  <div key={event.id}>{event.id} / {event.title} / {event.description} / {event.start_ts} / {event.end_ts}</div>
+)}
+</div>*/
 
 export default BigCalendar;

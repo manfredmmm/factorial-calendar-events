@@ -47,21 +47,23 @@ const Layout = ({
       <meta name="twitter:domain" content="" />
       <link rel="icon" href="/bike.svg" />
     </Head>
-    <div className="bg-slate-100 min-h-screen">
-      <div className="py-5">
-        <header className="mb-5">
-          <div className="flex">
-            <Image
-              src={bikeLogo}
-              alt="2Wheels logo"
-            />
-            <div className="ml-5">
-              <h1 className="text-3xl">{title}</h1>
-              <p>{description}</p>
+    <div className="bg-slate-100 min-h-screen py-5">
+      <div className="flex justify-center content-center">
+        <div className="w-full">
+          <header className="mb-5">
+            <div className="flex">
+              <Image
+                src={bikeLogo}
+                alt="2Wheels logo"
+              />
+              <div className="ml-5">
+                <h1 className="text-3xl">{title}</h1>
+                <p>{description}</p>
+              </div>
             </div>
-          </div>
-        </header>
-        <main className="">{children}</main>
+          </header>
+          <main className="">{children}</main>
+        </div>
       </div>
     </div>
   </>

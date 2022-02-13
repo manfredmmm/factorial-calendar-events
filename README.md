@@ -1,8 +1,16 @@
 # factorial-calendar-events
 
+NextJS app with Typescript and TailwindCSS
+
 ## Getting Started
 
-First, run the development server:
+Go to the directory and run the following command in order to setup the app:
+
+```bash
+npm install
+```
+
+And start the development server:
 
 ```bash
 npm run dev
