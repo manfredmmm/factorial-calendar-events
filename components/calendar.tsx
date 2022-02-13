@@ -3,11 +3,9 @@ import moment from 'moment'
 import 'moment-timezone'
 import { useEffect, useState } from 'react'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
-import DateTimePicker from 'react-date-picker/dist/entry.nostyle'
 import 'react-datetime-picker/dist/DateTimePicker.css'
 import 'react-calendar/dist/Calendar.css'
 import 'react-clock/dist/Clock.css'
-// import EventModal from 'components/event_modal'
 
 type Event = {
   id: number;
@@ -36,10 +34,14 @@ const BigCalendar = () => {
   const [formType, setFormType] = useState('create');
   const [counter, updateCounter] = useState(0);
   const [errors, setErrors] = useState('');
+  const API_URL = "https://factorial-api-events.herokuapp.com/api/v1/events";
+
+  // http://localhost:3000/api/v1/events
+  // https://factorial-api-events.herokuapp.com/api/v1/events
 
   useEffect(() => {
     moment.tz.setDefault("Europe/Madrid");
-    fetch('http://localhost:3000/api/v1/events')
+    fetch(`${API_URL}`)
       .then(response => response.json())
       .then(setList);
   }, [counter]);
@@ -57,6 +59,7 @@ const BigCalendar = () => {
 
   const createEvent = () => {
     setFormType("create");
+    setErrors('');
     setModalState(true);
   }
 
@@ -83,7 +86,7 @@ const BigCalendar = () => {
 
   const deleteEvent = async (e: any) => {
     e.preventDefault();
-    const res = await fetch(`http://localhost:3000/api/v1/events/${selectedEvent.id}`, {
+    const res = await fetch(`${API_URL}/${selectedEvent.id}`, {
       headers: {
         'Content-Type': 'application/json'
       },
@@ -101,7 +104,7 @@ const BigCalendar = () => {
   const submitEvent = async (e: any) => {
     e.preventDefault();
     if (formType === "create") {
-      const res = await fetch('http://localhost:3000/api/v1/events', {
+      const res = await fetch(`${API_URL}}`, {
         body: JSON.stringify({
           title: e.target.title.value,
           start_date: e.target.start_date.value,
@@ -120,7 +123,7 @@ const BigCalendar = () => {
         setErrors(result.statusText);
       }
     } else if (formType === "update") {
-      const res = await fetch(`http://localhost:3000/api/v1/events/${selectedEvent.id}`, {
+      const res = await fetch(`${API_URL}/${selectedEvent.id}`, {
         body: JSON.stringify({
           title: e.target.title.value,
           start_date: e.target.start_date.value,
@@ -195,11 +198,6 @@ const BigCalendar = () => {
 }
 
 /*
-<EventModal event={selectedEvent} show={modalState}></EventModal>
-<div>
-{list.map((event: Event) => 
-  <div key={event.id}>{event.id} / {event.title} / {event.description} / {event.start_ts} / {event.end_ts}</div>
-)}
-</div>*/
+<EventModal event={selectedEvent} show={modalState}></EventModal>*/
 
 export default BigCalendar;
