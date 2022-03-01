@@ -17,7 +17,7 @@ type Event = {
   end_ts: number;
 }
 
-type CalenderEvent = {
+type CalendarEvent = {
   id: number;
   title: string;
   start: any;
@@ -26,8 +26,15 @@ type CalenderEvent = {
 
 const BigCalendar = () => {
   const [list, setList] = useState([]);
-  const modalContext = useContext(ModalContext);
-  const [counter, updateCounter] = useState(0);
+  const modalContext = useContext(ModalContext)
+  const [showModal, setShowModal] = useState(false);
+  const [errors, setErrors] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState({
+    id: 0, 
+    title: '',
+    start: moment().unix().toString(),
+    end: moment().add(1, 'h').unix().toString()
+  });
 
   const API_URL = "http://localhost:3000/api/v1/events";
   // const API_URL = "https://factorial-api-events.herokuapp.com/api/v1/events";
@@ -36,7 +43,7 @@ const BigCalendar = () => {
     fetch(`${API_URL}`)
       .then(response => response.json())
       .then(setList);
-  }, [counter]);
+  }, []);
 
   const parseEvents = (events: Event[]) => {
     return events.map((event: Event) => {
@@ -49,26 +56,19 @@ const BigCalendar = () => {
     });
   }
 
-  const [selectedEvent, setSelectedEvent] = useState({
-    id: 0, 
-    title: '',
-    start: moment().unix().toString(),
-    end: moment().add(1, 'h').unix().toString()
-  });
-
   const createEvent = () => {
     modalContext.formType = 'create';
-    modalContext.errors = '';
-    modalContext.show = true;
+    setErrors('');
+    setShowModal(true);
   }
   
-  const handleSelectedEvent = (event: CalenderEvent) => {
+  const handleSelectedEvent = (event: CalendarEvent) => {
     event.start = moment(event.start).unix();
     event.end = moment(event.end).unix();
     setSelectedEvent(event);
     modalContext.formType = 'update';
-    modalContext.errors = '';
-    modalContext.show = true;
+    setErrors('');
+    setShowModal(true);
   }
   
   return(
@@ -88,7 +88,14 @@ const BigCalendar = () => {
         onSelectEvent={(event) => handleSelectedEvent(event)}
         views={['month']}
       />
-      <EventModal event={selectedEvent}></EventModal>
+      <EventModal 
+        event={selectedEvent}
+        eventsList={list}
+        showModal={showModal}
+        setShowModal={setShowModal}
+        errors={errors}
+        setErrors={setErrors}
+      />
     </div>
   );
 }

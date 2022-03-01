@@ -1,9 +1,8 @@
 import { useState, useContext } from 'react'
 import { ModalContext } from 'components/context/ModalContext'
-import moment from 'moment'
 import 'moment-timezone'
 
-type CalenderEvent = {
+type CalendarEvent = {
   id: number,
   title: string,
   start: string,
@@ -11,11 +10,21 @@ type CalenderEvent = {
 }
 
 type EventModalProps = {
-  event: CalenderEvent
+  event: CalendarEvent,
+  eventsList: Array<CalendarEvent>,
+  showModal: boolean,
+  setShowModal: (arg1: boolean) => void,
+  errors: string,
+  setErrors: (arg1: string) => void,
 }
 
 const EventModal = ({
   event,
+  eventsList,
+  showModal,
+  setShowModal,
+  errors,
+  setErrors,
 }: EventModalProps) => {
   const modalContext = useContext(ModalContext);
 
@@ -23,10 +32,8 @@ const EventModal = ({
   // const API_URL = "https://factorial-api-events.herokuapp.com/api/v1/events";
 
   const closeModal = () => {
-    modalContext.errors = '';
-    modalContext.show = false;
-
-    debugger;
+    setShowModal(false);
+    setErrors('');
   }
 
   const deleteEvent = async (e: any) => {
@@ -39,10 +46,10 @@ const EventModal = ({
     });
     const result = await res;
     if (result.status === 204) {
+      setShowModal(false);
       // updateCounter(counter+1);
-      modalContext.show = false;
     } else {
-      modalContext.errors = result.statusText;
+      setErrors(result.statusText);
     }
   }
 
@@ -62,10 +69,10 @@ const EventModal = ({
       });
       const result = await res;
       if (result.status === 201) {
+        setShowModal(false);
         // updateCounter(counter+1);
-        modalContext.show = false;
       } else {
-        modalContext.errors = result.statusText;
+        setErrors(result.statusText);
       }
     } else if (modalContext.formType === "update") {
       const res = await fetch(`${API_URL}/${event.id}`, {
@@ -81,16 +88,16 @@ const EventModal = ({
       });
       const result = await res;
       if (result.status === 200) {
+        setShowModal(false);
         // updateCounter(counter+1);
-        modalContext.show = false;
       } else {
-        modalContext.errors = result.statusText;
+        setErrors(result.statusText);
       }
     }
   }
 
   return (
-   <div className={`max-w-xs fixed bg-slate-400 w-80	top-20 left-20 z-10	p-3 rounded my-2 overflow-hidden shadow-lg ${modalContext.show ? 'block' : 'hidden'}`}>
+   <div className={`max-w-xs fixed bg-slate-400 w-80 top-20 left-20 z-10	p-3 rounded my-2 overflow-hidden shadow-lg ${showModal ? 'block' : 'hidden'}`}>
       <button
         className="float-right mb-5 px-4 py-2 font-bold text-white bg-slate-600 rounded-full hover:bg-slate-800"
         onClick={closeModal}
@@ -105,8 +112,8 @@ const EventModal = ({
         <input className="mb-4 border-b-2" defaultValue={event.start} id="start_date" name="start_date" type="text" autoComplete="start_date" required />
         <label className="mb-2 italic" htmlFor="end_date">End date:</label>
         <input className="mb-4 border-b-2" defaultValue={event.end} id="end_date" name="end_date" type="text" autoComplete="title" required />
-        <div className={`${modalContext.errors === '' ? 'hidden' : 'block'} w-full text-white bg-red-400 rounded mb-3 px-8 py-3`}>
-          {modalContext.errors}
+        <div className={`${errors === '' ? 'hidden' : 'block'} w-full text-white bg-red-400 rounded mb-3 px-8 py-3`}>
+          {errors}
         </div>
         <button
           type="submit"
